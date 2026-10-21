@@ -57,3 +57,13 @@ ClientAliveCountMax 2
 - _01-clean-install_ - после установки ОС и обновления пакетов;
 - _02-keys-configured_ - после задания 1 (учётная запись devops, ключевая аутентификация);
 - _03-ssh-hardened_ - после задания 2 (усиление SSH).
+
+## 8. Веб-сервер
+
+- Устанавливаемый пакет: nginx;
+- Конфигурация ресурса: /etc/nginx/sites-available/devops-site (активирована симлинком /etc/nginx/sites-enabled/devops-site);
+- Каталог ресурса: /var/www/devops-site, владелец devops:devops,права: каталоги 755, файлы 644;
+- Сертификат: /etc/ssl/certs/devops.crt (644); ключ: /etc/ssl/private/devops.key (600, root);
+- Команда формирования сертификата (срок действия 365 дней):sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048
+  -keyout /etc/ssl/private/devops.key -out /etc/ssl/certs/devops.crt
+  -subj "/CN=devops.local" -addext "subjectAltName=DNS:devops.local".
