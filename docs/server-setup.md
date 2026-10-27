@@ -67,3 +67,37 @@ ClientAliveCountMax 2
 - Команда формирования сертификата (срок действия 365 дней):sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048
   -keyout /etc/ssl/private/devops.key -out /etc/ssl/certs/devops.crt
   -subj "/CN=devops.local" -addext "subjectAltName=DNS:devops.local".
+
+## 9. Контейнеризация
+Docker Engine установлен на виртуальную машину из официального репозитория Docker по инструкции из документации.
+Версия Docker Engine: 29.9.2.
+
+Пользователь devops состоит в группе docker и имеет возможность управлять контейнерами без использования sudo.
+
+Исходный код хранится в репозитории devops-course-2026 на хостовой системе в каталоге app/. На сервере проект размещён по пути /home/devops/app/.
+
+Файл /home/devops/app/.env содержит параметры подключения к PostgreSQL. Права доступа к .env - 600, владелец - devops.
+
+Сервисы:
+
+- app - Flask-приложение, работает от имени непривилегированного пользователя;
+- db - PostgreSQL 16.
+
+Приложение опубликовано только на 127.0.0.1:5000 виртуальной машины.
+
+Порт PostgreSQL 5432 не публикуется на хостовой системе.
+
+Для PostgreSQL используется именованный том app_db_data
+
+В существующем HTTPS-блоке /etc/nginx/sites-available/devops-site настроено проксирование:
+```
+location /app/ {
+    proxy_pass http://127.0.0.1:5000/;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+Приложение доступно по адресу https://devops.local/app/.

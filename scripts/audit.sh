@@ -41,5 +41,31 @@ check "Нет файлов, доступных на запись всем" "0" "
 # г) права ключа равны 600
 check "Права ключа TLS равны 600" "600" "$(sudo stat -c '%a' /etc/ssl/private/devops.key)"
 
+echo "[5] Контейнеризация"
+# а) служба docker активна
+check "Служба Docker активна" "active" "$(systemctl is-active docker)"
+# б) контейнер СУБД находится в состоянии healthy
+check "PostgreSQL здоров" "healthy" "$(docker inspect -f '{{.State.Health.Status}}' app-db-1 2>/dev/null)"
+# в) порты 5000 и 5432 не прослушиваются ни на одном адресе, кроме 127.0.0.1
+PORTS_STATUS="$(
+    ss -tln | awk '
+        NR > 1 {
+            addr = $4
+            if (addr ~ /:(5000|5432)$/ &&
+                addr != "127.0.0.1:5000" &&
+                addr != "127.0.0.1:5432") {
+                bad = 1
+            }
+        }
+        END {
+            print bad ? "unsafe" : "safe"
+        }
+    '
+)"
+
+check "Порты 5000 и 5432 защищены" "safe" "$PORTS_STATUS"
+# г) права файла ~/app/.env равны 600
+check "Права файла .env" "600" "$(stat -c '%a' "$HOME/app/.env" 2>/dev/null)"
+
 echo "Пройдено: $PASS, не пройдено: $FAIL"
 [[ $FAIL -eq 0 ]] && exit 0 || exit 1
