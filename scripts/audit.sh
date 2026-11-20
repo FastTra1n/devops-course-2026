@@ -67,5 +67,30 @@ check "Порты 5000 и 5432 защищены" "safe" "$PORTS_STATUS"
 # г) права файла ~/app/.env равны 600
 check "Права файла .env" "600" "$(stat -c '%a' "$HOME/app/.env" 2>/dev/null)"
 
+echo "[6] Контрольная работа № 2"
+
+# а) контейнер сервиса redis находится в состоянии healthy.
+REDIS_ID="$(docker compose --project-directory "$HOME/kr2" ps -q redis)"
+
+check "Redis healthy" "healthy" \
+  "$(docker inspect -f '{{.State.Health.Status}}' "$REDIS_ID" 2>/dev/null)"
+
+# б) порт 8003 опубликован только на адресе 127.0.0.1
+check "Порт приложения защищён" "127.0.0.1:8003" \
+  "$(docker compose --project-directory "$HOME/kr2" port app 8003 2>/dev/null)"
+
+# в) права файла ~/kr2/.env равны 600
+check "Права KR2 .env" "600" \
+  "$(stat -c '%a' "$HOME/kr2/.env" 2>/dev/null)"
+
+# г) сертификат /etc/ssl/certs/kr2.crt истекает не ранее чем через 30 дней
+check "Сертификат KR2 действителен" "0" \
+  "$(sudo openssl x509 -checkend 2592000 -noout \
+      -in /etc/ssl/certs/kr2.crt >/dev/null 2>&1; echo $?)"
+
+# д) ресурс kr2 активирован (символическая ссылка в /etc/nginx/sites-enabled/)
+check "Ресурс KR2 активирован" "yes" \
+  "$([[ -L /etc/nginx/sites-enabled/kr2 ]] && echo yes || echo no)"
+
 echo "Пройдено: $PASS, не пройдено: $FAIL"
 [[ $FAIL -eq 0 ]] && exit 0 || exit 1
