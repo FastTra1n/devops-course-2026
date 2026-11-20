@@ -101,3 +101,17 @@ location /app/ {
 ```
 
 Приложение доступно по адресу https://devops.local/app/.
+
+## 10. Образ для автоматического развёртывания
+
+- Container Registry: GitHub Container Registry (GHCR);
+- Образ: ghcr.io/fasttra1n/devops-ci-app;
+- Тег версии: 8ea00814186c7a3d640309f5538f3dac08838372;
+- Доступ к пакету: Public;
+- Целевой сервер: devops-vm;
+- SSH: devops, порт 2222;
+- Host-only IP: 192.168.56.101;
+- Порт приложения внутри контейнера: 5000;
+- Локальный порт для проверки: 5001;
+- Health endpoint: /health;
+- Ожидаемый ответ: {"status":"ok"}.
