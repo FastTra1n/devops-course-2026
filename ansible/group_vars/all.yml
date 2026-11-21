@@ -1,0 +1,6 @@
+---
+app_image: "ghcr.io/fasttra1n/devops-ci-app"
+app_tag: "8ea00814186c7a3d640309f5538f3dac08838372"
+app_container_name: "devops-ci-app"
+app_host_port: 5000
+app_internal_port: 5000
