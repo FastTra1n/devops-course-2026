@@ -102,7 +102,7 @@ location /app/ {
 
 Приложение доступно по адресу https://devops.local/app/.
 
-## 10. Образ для автоматического развёртывания
+## Образ для автоматического развёртывания
 
 - Container Registry: GitHub Container Registry (GHCR);
 - Образ: ghcr.io/fasttra1n/devops-ci-app;
@@ -115,3 +115,64 @@ location /app/ {
 - Локальный порт для проверки: 5001;
 - Health endpoint: /health;
 - Ожидаемый ответ: {"status":"ok"}.
+
+## 10. Ansible
+
+### Назначение
+
+Настройка Ubuntu Server и развёртывание контейнеризированного Flask-приложения автоматизированы с помощью Ansible.
+
+Управляющий узел — WSL Ubuntu на Windows. Управляемый узел — VirtualBox VM `devops-vm` с Ubuntu Server 24.04.
+
+Проект Ansible расположен в каталоге `ansible/` репозитория `devops-course-2026`.
+
+### Подключение к серверу
+
+- Адрес VM: `192.168.56.101` (Host-only);
+- SSH-порт: `22`;
+- Bootstrap inventory: `inventory/bootstrap.ini`, пользователь `student`, первоначальное подключение по паролю;
+- Production inventory: `inventory/prod.ini`, пользователь `devops`, подключение по ключу `~/.ssh/devops_vm`;
+- Повышение привилегий: sudo; для пользователя `devops` настроен неинтерактивный доступ.
+
+### Роли Ansible
+
+- `base` — проверка ОС, установка базовых пакетов и Docker Engine из официального репозитория.
+- `ssh` — создание пользователя `devops`, установка SSH-ключа, настройка sudo, SSH и UFW.
+- `nginx` — установка и настройка Nginx как reverse proxy.
+- `app` — загрузка образа из GHCR, управление Docker-контейнером и проверка HTTP `/health`.
+
+### Приложение
+
+- Образ: `ghcr.io/fasttra1n/devops-ci-app`.
+- Проверенная версия: `8ea00814186c7a3d640309f5538f3dac08838372`.
+- Контейнер: `devops-ci-app`.
+- Локальный порт контейнера: `127.0.0.1:5000`.
+- Внешний HTTP-порт: `80`, через Nginx.
+- Health endpoint: `http://192.168.56.101/health`.
+- Ожидаемый ответ: `{"status":"ok"}`.
+
+### Команды управления
+
+Первоначальная настройка:
+
+```bash
+ansible-playbook -i inventory/bootstrap.ini site.yml --ask-pass --ask-become-pass
+```
+
+Последующие запуски:
+
+```bash
+ansible-playbook site.yml
+```
+
+Проверка конфигурации без изменений:
+
+```bash
+ansible-playbook verify.yml
+```
+
+### Проверка результата
+
+```bash
+curl --fail http://192.168.56.101/health
+```
